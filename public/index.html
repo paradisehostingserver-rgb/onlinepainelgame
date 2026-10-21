@@ -1,1 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel dos Devs</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3fb;--sf:#fff;--fg:#1c1230;--mu:#6b5f85;--bd:#ddd3ee;--ac:#7b1fe0;--ok:#16a34a;--no:#dc2626;--wa:#d97706;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0710;--sf:#171024;--fg:#ece6f7;--mu:#a99bc0;--bd:#2f2347;--ac:#a855ff;--ok:#4be36a;--no:#ff6b81;--wa:#ffb020;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0710;--sf:#171024;--fg:#ece6f7;--mu:#a99bc0;--bd:#2f2347;--ac:#a855ff;--ok:#4be36a;--no:#ff6b81;--wa:#ffb020;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0}h2{font-size:17px;margin:0 0 10px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.mu{color:var(--mu);font-size:13px}
+input,select,textarea,button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+textarea{width:100%;min-height:150px;resize:vertical}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+button.dng{color:var(--no)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto}
+.tabs button{white-space:nowrap}.tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{border:1px solid var(--bd);border-radius:10px;padding:12px;background:var(--bg)}
+.stat b{display:block;font-size:22px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+form.f{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.in{color:var(--ok)}.out{color:var(--no)}
+.banner{border-radius:10px;padding:12px 14px;border:1px solid var(--bd);margin-bottom:12px;font-weight:600}
+.banner.free{border-color:var(--ok);color:var(--ok)}.banner.busy{border-color:var(--wa);color:var(--wa)}
+.sw{display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;font-weight:600}
+.sw i{width:50px;height:28px;border-radius:14px;background:var(--bd);position:relative;transition:background .2s;flex:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+.sw[aria-checked="true"] i{background:var(--wa)}.sw[aria-checked="true"] i::after{left:25px}
+.legend{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.legend span i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.charts{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;display:none;max-width:90vw;z-index:9}
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+#gate .card{width:100%;max-width:340px;text-align:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="gate"><div class="card">
+  <h1>Painel dos Devs</h1>
+  <p class="mu">Área restrita à equipe do jogo.</p>
+  <form id="gf" class="row" style="flex-direction:column;align-items:stretch">
+    <input id="nm" placeholder="Seu nome (aparece na trava)" maxlength="24" autocomplete="off" autofocus>
+    <input id="pw" type="password" placeholder="Senha" autocomplete="off">
+    <button class="pri" type="submit">Entrar</button>
+    <div id="ge" class="out" style="font-size:13px;min-height:18px"></div>
+  </form>
+</div></div>
 
+<div id="app" class="wrap" hidden>
+  <div class="top"><h1>Painel dos Devs</h1><button id="out">Sair</button></div>
+  <div class="mu" id="dbwarn" hidden style="margin-bottom:10px">Os dados compartilhados não estão disponíveis nesta visualização. Abra o painel logado no claude.ai para registrar e ver dados da equipe.</div>
+  <div class="tabs" id="tabs">
+    <button data-t="about" class="on">Sobre o jogo</button>
+    <button data-t="cash">Fluxo de caixa</button>
+    <button data-t="game">Jogo</button>
+  </div>
+
+  <section id="t-about">
+    <div class="card"><h2>Game Fighter</h2>
+      <div class="grid" style="margin-bottom:14px">
+        <div class="stat"><b>4</b><span class="mu">modos de jogo</span></div>
+        <div class="stat"><b>11</b><span class="mu">lutadores</span></div>
+        <div class="stat"><b>100</b><span class="mu">níveis no passe</span></div>
+        <div class="stat"><b>5</b><span class="mu">dificuldades</span></div>
+      </div>
+      <div id="abt" style="white-space:pre-wrap"></div>
+      <div id="abe" hidden><textarea id="abx"></textarea></div>
+      <div class="row" style="margin-top:10px"><button id="abb">Editar texto</button><button id="abs" class="pri" hidden>Salvar</button></div>
+    </div>
+  </section>
+
+  <section id="t-cash" hidden>
+    <div class="grid" style="margin-bottom:14px">
+      <div class="stat"><span class="mu">Entrou</span><b class="in" id="s-in">R$ 0,00</b></div>
+      <div class="stat"><span class="mu">Saiu</span><b class="out" id="s-out">R$ 0,00</b></div>
+      <div class="stat"><span class="mu">Saldo</span><b id="s-bal">R$ 0,00</b></div>
+      <div class="stat"><span class="mu">Lançamentos</span><b id="s-n">0</b></div>
+    </div>
+    <div class="card"><h2>Novo lançamento</h2>
+      <form class="f" id="cf">
+        <select name="tp"><option value="in">Entrada</option><option value="out">Saída</option></select>
+        <input name="val" inputmode="decimal" placeholder="Valor (R$)" required>
+        <input name="desc" placeholder="Descrição" maxlength="120" required>
+        <select name="cat">
+          <option>Vendas da loja</option><option>Doações</option><option>Patrocínio</option>
+          <option>Servidor e hospedagem</option><option>Ferramentas e licenças</option><option>Marketing</option>
+          <option>Equipe</option><option>Arte e som</option><option>Outros</option>
+        </select>
+        <input name="date" type="date" required>
+        <button class="pri" type="submit">Registrar</button>
+      </form>
+    </div>
+    <div class="charts">
+      <div class="card"><h2>Entradas e saídas por mês</h2><div id="ch-m"></div></div>
+      <div class="card"><h2>Saídas por categoria</h2><div class="row" style="align-items:center"><div id="ch-c" style="width:150px;flex:none"></div><div class="legend" id="lg-c"></div></div></div>
+    </div>
+    <div class="card"><h2>Histórico</h2><div class="scroll"><table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Por</th><th></th></tr></thead><tbody id="cb"></tbody></table></div><div class="mu" id="ce" style="margin-top:8px">Nenhum lançamento ainda.</div></div>
+  </section>
+
+  <section id="t-game" hidden>
+    <div class="banner free" id="gb"></div>
+    <div class="card">
+      <button class="sw" id="sw" role="switch" aria-checked="false"><i></i><span id="swl">Trava de edição: DESLIGADA</span></button>
+      <div class="mu" id="swh" style="margin-top:8px"></div>
+    </div>
+    <div class="card"><h2>Versão mais recente</h2>
+      <div id="cur" class="mu">Nenhuma versão enviada ainda.</div>
+      <div class="row" style="margin-top:10px"><button class="pri" id="dlb" disabled>Baixar versão atual</button></div>
+    </div>
+    <div class="card"><h2>Enviar nova versão</h2>
+      <div class="mu" style="margin-bottom:8px">Só é possível enviar enquanto você estiver com a trava ligada. Formatos aceitos: .html (arquivo único), .txt, .json, .md, .csv.</div>
+      <div class="row"><input type="file" id="fi" accept=".html,.txt,.json,.md,.csv"><input id="fn" placeholder="O que mudou? (opcional)" maxlength="140" style="flex:1;min-width:180px"><button id="up" class="pri" disabled>Enviar</button></div>
+    </div>
+    <div class="card"><h2>Versões anteriores</h2><div class="scroll"><table><tbody id="hb"></tbody></table></div><div class="mu" id="he">Sem histórico ainda.</div></div>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script>
+(()=>{const API='/api',rnd=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+let ID='',NAME='';try{ID=localStorage.getItem('pd_id')||'';if(!ID){ID=rnd();localStorage.setItem('pd_id',ID)}NAME=localStorage.getItem('pd_name')||''}catch(e){ID=ID||rnd()}
+const PD=window.PD={api:API,id:ID,name:NAME};
+const call=PD.call=async(op,b)=>{const r=await fetch(API+'?op='+op,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b||{})});if(r.status===401)throw{code:'auth'};if(!r.ok)throw{code:'unavailable',message:'erro '+r.status};return r.json()};
+const cache={},subs=[];let sig='',timer=0;const fire=()=>subs.forEach(f=>f());
+async function poll(){try{const r=await fetch(API+'?op=snap',{cache:'no-store'});if(r.status===401){location.reload();return}const d=await r.json(),s=JSON.stringify(d);if(s!==sig){sig=s;for(const k in cache)delete cache[k];Object.assign(cache,d);fire()}}catch(e){}}
+const start=()=>{if(!timer){timer=setInterval(()=>{if(!document.hidden)poll()},3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});poll()}};
+const sd=p=>({id:p.split('/').pop(),exists:p in cache,data:()=>cache[p]});
+const db={doc:p=>({get:async()=>{await poll();return sd(p)},set:async d=>{await call('set',{p,d});cache[p]=d;fire()},delete:async()=>{await call('del',{p});delete cache[p];fire()},onSnapshot:n=>{const f=()=>n(sd(p));subs.push(f);start();f()}}),
+ collection:c=>({onSnapshot:n=>{const f=()=>n({docs:Object.keys(cache).filter(k=>k.startsWith(c+'/')).map(sd)});subs.push(f);start();f()}})};
+const user={me:async()=>({id:PD.id,name:PD.name}),profiles:async ids=>Object.fromEntries(ids.map(i=>[i,{name:(cache['profiles/'+i]||{}).name||''}]))};
+const assets={upload:async(f,o)=>{if(f.size>4e6)throw{message:'arquivo acima de 4 MB'};const b=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(f)});const r=await call('upload',{b});return{id:r.id,url:API+'?op=file&id='+r.id,sizeBytes:f.size,contentType:(o&&o.type)||''}},delete:async id=>{await call('rmfile',{id})}};
+const downloads={save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(data);a.download=filename;document.body.appendChild(a);a.click();a.remove()}};
+window.claude={use:async n=>({db,user,assets,downloads}[n]||null)};})();
+</script>
+<script>
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmt=i=>{try{return new Date(i).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}catch(e){return ''}};
+const kb=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())};
+const use=async n=>{try{return window.claude?await window.claude.use(n):null}catch(e){return null}};
+let db=null,user=null,assets=null,dl=null,me={id:null,name:''},cash=[],st={locked:false,history:[]},names={},started=false;
+const DEF_ABOUT='Game Fighter é um jogo de luta de plataforma 2D que roda direto no navegador (HTML5 Canvas e JavaScript, em um único arquivo).\n\nModos: lutar contra a CPU, versus para 2 jogadores, online com amigos (sala com nome e senha opcional) e treino.\n\nProgressão: perfil com nível, XP e títulos, passe de batalha de 100 níveis, missões, loja com moedas, códigos promocionais e contas com login. Use esta página para alinhar a equipe: registrar o dinheiro do projeto e controlar quem está mexendo na versão do jogo.';
+
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3200)}
+function twoClick(b,label,fn){if(b.dataset.arm){fn();return}b.dataset.arm=1;const o=b.textContent;b.textContent=label;setTimeout(()=>{delete b.dataset.arm;b.textContent=o},3000)}
+const nm=id=>!id?'um dev':id===me.id?'você':(names[id]||'um dev');
+
+/* ---- senha ---- */
+$('#gf').addEventListener('submit',async e=>{e.preventDefault();const n=$('#nm').value.trim().slice(0,24);if(!n){$('#ge').textContent='Informe seu nome.';return}
+  try{await PD.call('login',{pw:$('#pw').value,id:PD.id,name:n});PD.name=n;try{localStorage.setItem('pd_name',n)}catch(x){}enter()}
+  catch(x){$('#ge').textContent=x&&x.code==='auth'?'Senha incorreta.':'Não foi possível entrar.';$('#pw').value=''}});
+$('#out').onclick=async()=>{try{await PD.call('logout')}catch(e){}location.reload()};
+function enter(){$('#gate').hidden=true;$('#app').hidden=false;if(!started){started=true;connect()}}
+
+/* ---- abas ---- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));['about','cash','game'].forEach(t=>$('#t-'+t).hidden=t!==b.dataset.t)});
+
+/* ---- conexão ---- */
+async function connect(){
+  user=await use('user');db=await use('db');assets=await use('assets');dl=await use('downloads');
+  if(user){try{me=await user.me()}catch(e){}}
+  $('#cf').elements.date.value=today();
+  renderAbout(DEF_ABOUT);renderGame();renderCash();
+  if(!db){$('#dbwarn').hidden=false;return}
+  db.doc('game/state').onSnapshot(s=>{st=Object.assign({locked:false,history:[]},s.exists?s.data():{});loadNames().then(renderGame)},()=>{});
+  db.collection('cash').onSnapshot(q=>{cash=q.docs.map(d=>Object.assign({id:d.id},d.data()));loadNames().then(renderCash)},()=>{});
+  db.doc('game/about').onSnapshot(s=>renderAbout(s.exists&&s.data().text?s.data().text:DEF_ABOUT),()=>{});
+}
+async function loadNames(){
+  if(!user)return;
+  const ids=new Set([st.by,st.file&&st.file.by,...(st.history||[]).map(h=>h.by),...cash.map(c=>c.by)].filter(Boolean));
+  if(!ids.size)return;
+  try{const ps=await user.profiles([...ids]);for(const id in ps)names[id]=ps[id].name||''}catch(e){}
+}
+
+/* ---- sobre ---- */
+function renderAbout(t){$('#abt').textContent=t;$('#abx').value=t}
+$('#abb').onclick=()=>{const ed=$('#abe').hidden;$('#abe').hidden=!ed;$('#abs').hidden=!ed;$('#abt').hidden=ed;$('#abb').textContent=ed?'Cancelar':'Editar texto'};
+$('#abs').onclick=async()=>{if(!db){toast('Dados compartilhados indisponíveis.');return}
+  try{await db.doc('game/about').set({text:$('#abx').value.slice(0,6000),by:me.id,at:Date.now()});$('#abb').click();toast('Texto salvo.')}catch(e){toast('Não foi possível salvar.')}};
+
+/* ---- fluxo de caixa ---- */
+$('#cf').addEventListener('submit',async e=>{e.preventDefault();const f=e.target.elements;
+  const v=parseFloat(String(f.val.value).replace(/\./g,'').replace(',','.'))||parseFloat(String(f.val.value).replace(',','.'));
+  if(!(v>0)){toast('Informe um valor maior que zero.');return}
+  if(!db){toast('Dados compartilhados indisponíveis.');return}
+  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  try{await db.doc('cash/'+id).set({type:f.tp.value,amount:Math.round(v*100)/100,desc:f.desc.value.trim().slice(0,120),cat:f.cat.value,date:f.date.value,by:me.id,at:Date.now()});
+    f.val.value='';f.desc.value='';toast('Lançamento registrado.')}catch(x){toast('Não foi possível registrar.')}});
+const PAL=['#a855ff','#4be36a','#ffb020','#ff6b81','#38bdf8','#f472b6','#94a3b8','#facc15','#fb923c'];
+function renderCash(){
+  const list=[...cash].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.at||0)-(a.at||0));
+  const ti=list.filter(c=>c.type==='in').reduce((s,c)=>s+c.amount,0),to=list.filter(c=>c.type==='out').reduce((s,c)=>s+c.amount,0);
+  $('#s-in').textContent=brl(ti);$('#s-out').textContent=brl(to);const bal=ti-to;
+  const sb=$('#s-bal');sb.textContent=brl(bal);sb.className=bal>=0?'in':'out';$('#s-n').textContent=list.length;
+  $('#ce').hidden=list.length>0;
+  $('#cb').innerHTML=list.slice(0,80).map(c=>`<tr><td>${esc((c.date||'').split('-').reverse().join('/'))}</td><td class="${c.type==='in'?'in':'out'}">${c.type==='in'?'Entrada':'Saída'}</td><td>${esc(c.desc)}</td><td>${esc(c.cat)}</td><td class="${c.type==='in'?'in':'out'}">${c.type==='in'?'+':'−'} ${brl(c.amount)}</td><td>${esc(nm(c.by))}</td><td><button class="dng" data-del="${esc(c.id)}">Excluir</button></td></tr>`).join('');
+  // barras por mês
+  const mm={};list.forEach(c=>{const k=(c.date||'').slice(0,7);if(!k)return;(mm[k]=mm[k]||{in:0,out:0})[c.type]+=c.amount});
+  const ks=Object.keys(mm).sort().slice(-6);
+  if(!ks.length){$('#ch-m').innerHTML='<div class="mu">Os gráficos aparecem quando houver lançamentos.</div>'}else{
+    const mx=Math.max(...ks.map(k=>Math.max(mm[k].in,mm[k].out)),1),W=360,H=170,bw=Math.min(26,(W-20)/ks.length/2.6),gap=(W-20)/ks.length;
+    let s=`<svg viewBox="0 0 ${W} ${H+24}" width="100%" role="img" aria-label="Entradas e saídas por mês"><line x1="10" y1="${H}" x2="${W-10}" y2="${H}" stroke="var(--bd)"/>`;
+    ks.forEach((k,i)=>{const cx=10+gap*i+gap/2,hi=mm[k].in/mx*(H-18),ho=mm[k].out/mx*(H-18);
+      s+=`<rect x="${cx-bw-1}" y="${H-hi}" width="${bw}" height="${hi}" rx="3" fill="var(--ok)"><title>Entrou ${brl(mm[k].in)}</title></rect><rect x="${cx+1}" y="${H-ho}" width="${bw}" height="${ho}" rx="3" fill="var(--no)"><title>Saiu ${brl(mm[k].out)}</title></rect><text x="${cx}" y="${H+15}" font-size="10" text-anchor="middle" fill="var(--mu)">${k.slice(5)}/${k.slice(2,4)}</text>`});
+    $('#ch-m').innerHTML=s+'</svg><div class="legend" style="flex-direction:row;gap:14px;margin-top:6px"><span><i style="background:var(--ok)"></i>Entradas</span><span><i style="background:var(--no)"></i>Saídas</span></div>'}
+  // rosca de saídas
+  const cc={};list.filter(c=>c.type==='out').forEach(c=>cc[c.cat]=(cc[c.cat]||0)+c.amount);
+  const cs=Object.entries(cc).sort((a,b)=>b[1]-a[1]);
+  if(!cs.length){$('#ch-c').innerHTML='';$('#lg-c').innerHTML='<div class="mu">Sem saídas ainda.</div>'}else{
+    let off=25,s='<svg viewBox="0 0 42 42" width="150" role="img" aria-label="Saídas por categoria"><circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--bd)" stroke-width="7"/>';
+    cs.forEach(([k,v],i)=>{const p=v/to*100;s+=`<circle cx="21" cy="21" r="15.9155" fill="none" stroke="${PAL[i%PAL.length]}" stroke-width="7" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${off}"><title>${esc(k)}: ${brl(v)}</title></circle>`;off-=p});
+    $('#ch-c').innerHTML=s+'</svg>';
+    $('#lg-c').innerHTML=cs.map(([k,v],i)=>`<span><i style="background:${PAL[i%PAL.length]}"></i>${esc(k)} — ${brl(v)} (${Math.round(v/to*100)}%)</span>`).join('')}
+}
+$('#cb').addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b||!db)return;
+  twoClick(b,'Confirmar?',async()=>{try{await db.doc('cash/'+b.dataset.del).delete();toast('Lançamento excluído.')}catch(x){toast('Não foi possível excluir.')}})});
+
+/* ---- aba Jogo ---- */
+function renderGame(){
+  const lk=!!st.locked,mine=lk&&st.by===me.id,f=st.file;
+  const gb=$('#gb');gb.className='banner '+(!db?'':lk?'busy':'free');$('#swl').textContent=!db?'Trava de edição: indisponível':lk?'Trava de edição: LIGADA (alguém está mexendo no jogo)':'Trava de edição: DESLIGADA (ninguém está mexendo)';
+  gb.textContent=!db?'Status indisponível: esta página não está conectada aos dados compartilhados da equipe. Nada daqui é salvo nem visto pelos outros devs.':lk?`⚠ ${nm(st.by)==='você'?'Você está':nm(st.by)+' está'} mexendo no jogo desde ${fmt(st.since)}. O download está bloqueado.`:'Jogo livre para modificações. O download está liberado.';
+  const sw=$('#sw');sw.setAttribute('aria-checked',lk);sw.disabled=!db;
+  $('#swh').textContent=!lk?'Ligue antes de começar a mexer no jogo, para avisar a equipe.':mine?'Quando terminar, desligue e envie a nova versão antes, se houver.':'Outro dev está com a trava. Desligar só em caso de esquecimento.';
+  $('#cur').innerHTML=f?`<b style="color:var(--fg)">v${f.version} — ${esc(f.name)}</b> · ${kb(f.size)} · enviada por ${esc(nm(f.by))} em ${fmt(f.at)}${f.notes?'<br>'+esc(f.notes):''}`:'Nenhuma versão enviada ainda.';
+  $('#dlb').disabled=!f||lk||!dl;
+  $('#dlb').title=lk?'Bloqueado enquanto alguém mexe no jogo':'';
+  $('#up').disabled=!(mine&&assets);
+  const h=st.history||[];$('#he').hidden=h.length>0;
+  $('#hb').innerHTML=h.map((x,i)=>`<tr><td>v${x.version}</td><td>${esc(x.name)}</td><td>${kb(x.size)}</td><td>${fmt(x.at)}</td><td>${esc(nm(x.by))}</td><td>${esc(x.notes||'')}</td><td><button data-dl="${i}" ${lk||!dl?'disabled':''}>Baixar</button></td></tr>`).join('');
+  if(!assets&&db)$('#up').title='Somente editores podem enviar arquivos.';
+}
+$('#sw').onclick=async e=>{if(!db)return;const ref=db.doc('game/state');
+  try{const s=await ref.get(),d=s.exists?s.data():{};
+    if(!d.locked){await ref.set(Object.assign({},d,{locked:true,by:me.id,since:new Date().toISOString()}));toast('Trava ligada. Download bloqueado para a equipe.')}
+    else if(d.by===me.id){await ref.set(Object.assign({},d,{locked:false,by:null,since:null}));toast('Jogo liberado.')}
+    else twoClick(e.currentTarget,'Forçar liberação?',async()=>{await ref.set(Object.assign({},d,{locked:false,by:null,since:null}));toast('Trava liberada.')});
+  }catch(x){toast('Não foi possível alterar a trava.')}};
+async function fetchSave(en){if(st.locked||!dl)return;
+  try{const r=await fetch(en.url);if(!r.ok)throw 0;await dl.save({filename:en.name,data:await r.blob()})}
+  catch(x){if(!x||x.code!=='declined')toast('Não foi possível baixar o arquivo.')}}
+$('#dlb').onclick=()=>st.file&&fetchSave(st.file);
+$('#hb').addEventListener('click',e=>{const b=e.target.closest('[data-dl]');if(b)fetchSave(st.history[+b.dataset.dl])});
+$('#up').onclick=async()=>{const fi=$('#fi').files[0];if(!fi||!assets||!db)return;
+  const ext=(fi.name.split('.').pop()||'').toLowerCase(),tm={html:'text/plain',txt:'text/plain',json:'application/json',md:'text/markdown',csv:'text/csv'};
+  if(!tm[ext]){toast('Formato não aceito. Use .html, .txt, .json, .md ou .csv.');return}
+  $('#up').disabled=true;toast('Enviando…');
+  try{const ref=db.doc('game/state'),s=await ref.get(),d=s.exists?s.data():{};
+    if(!d.locked||d.by!==me.id){toast('Ligue a trava antes de enviar.');return}
+    const r=await assets.upload(fi,{type:tm[ext]});
+    const en={id:r.id,url:r.url,name:fi.name,size:r.sizeBytes,version:((d.file&&d.file.version)||0)+1,at:new Date().toISOString(),by:me.id,notes:$('#fn').value.trim()};
+    const all=[en,...(d.history||[])],keep=all.slice(0,15);
+    await ref.set(Object.assign({},d,{file:en,history:keep}));
+    all.slice(15).forEach(o=>{try{assets.delete(o.id)}catch(x){}});
+    $('#fi').value='';$('#fn').value='';toast('Versão v'+en.version+' enviada.');
+  }catch(x){toast('Falha no envio'+(x&&x.message?': '+x.message:'.'))}
+  finally{renderGame()}};
+
+fetch(PD.api+'?op=me').then(r=>{if(r.ok&&PD.name)enter()}).catch(()=>{});
+</script>
+</body>
+</html>
