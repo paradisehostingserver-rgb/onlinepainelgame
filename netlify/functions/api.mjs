@@ -4,7 +4,6 @@ import { getStore } from '@netlify/blobs';
 const ACCOUNTS = {
   francisco: 'vinigay',
   ythalo: 'vinigay',
-  pedro: 'vinigay'
 };
 
 const J = (o, s = 200, h = {}) =>
